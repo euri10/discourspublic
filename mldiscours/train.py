@@ -4,7 +4,7 @@ from keras.callbacks import ModelCheckpoint
 from mldiscours.generate_text import generate_arrays
 
 # log stuff
-from mldiscours.utils import LivePlotHistory
+from mldiscours.utils import LivePlotHistory, DrawWeights
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -24,7 +24,7 @@ def train_model(model, raw_text, chars, step=3, batch_size=1024, iters=1000):
     train_gen = generate_arrays(train_text, chars, seqlen=maxlen, step=step, batch_size=batch_size)
     samples, seed = next(train_gen)
 
-    logger.info('samples per epoch {:,f}'.format(samples))
+    logger.info('samples per epoch {:,.2f}'.format(samples))
     last_epoch = model.metadata.get('epoch', 0)
 
     # leading / !!!
@@ -39,11 +39,11 @@ def train_model(model, raw_text, chars, step=3, batch_size=1024, iters=1000):
     # filepath = os.path.join(filebase , "epoch{epoch:05d}-{loss:.4f}.hdf5")
     filepath = os.path.join(filebase, "best.hdf5")
     checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
-    history = LivePlotHistory(os.path.join(filebase, 'plot'), update_on_batch=True)
+    # history = LivePlotHistory()
+    drawweights = DrawWeights(figsize=(4, 4), layer_id=0, param_id=0)
     # earlystop = EarlyStopping(monitor='loss', min_delta=0, patience=100, verbose=0, mode='auto')
-    # callbacks_list = [checkpoint, history, earlystop]
 
-    callbacks_list = [checkpoint, history]
+    callbacks_list = [checkpoint, drawweights]
 
     hist = model.fit_generator(train_gen, validation_data=val_gen, nb_val_samples=val_samples, samples_per_epoch=samples, nb_epoch=iters, verbose=1, callbacks=callbacks_list)
     # hist = model.fit_generator(train_gen, samples_per_epoch=samples, nb_epoch=10000, verbose=1, callbacks=callbacks_list)

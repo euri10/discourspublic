@@ -135,7 +135,7 @@ crashlytics-build.properties
 fabric.properties
 
 # remove scraped inputs, quite big
-/data/discours.txt
+/data/discours/discours.txt
 /scrapdiscourspublic/discours.json
 /output/
 /mldiscours/old_tests/
