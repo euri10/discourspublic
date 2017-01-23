@@ -1,5 +1,6 @@
-import json
+import sys
 import os
+import json
 import logging
 import numpy as np
 import progressbar
@@ -57,8 +58,50 @@ def generate_arrays(path, chars, seqlen=40, step=3, batch_size=10):
             y[i, char_indices[next_char]] = 1
         yield X, y
 
+def sample(a, temperature=1.0):
+    # helper function to sample an index from a probability array
+    a = np.log(a) / temperature
+    a = np.exp(a) / np.sum(np.exp(a))
+    # this is stupid but np.random.multinomial throws an error if the probabilities
+    # sum to > 1 - which they do due to finite precision
+    while sum(a) > 1:
+        a /= 1.000001
+    return np.argmax(np.random.multinomial(1, a, 1))
+
+def generate(model, seed, diversity, chars):
+    _, maxlen, _ = model.input_shape
+    char_indices = dict((c, i) for i, c in enumerate(chars))
+    indices_char = dict((i, c) for i, c in enumerate(chars))
+    assert len(seed) >= maxlen
+    sentence = seed[len(seed)-maxlen: len(seed)]
+    while True:
+        x = np.zeros((1, maxlen, len(chars)))
+        for t, char in enumerate(sentence):
+            x[0, t, char_indices[char]] = 1.
+
+        preds = model.predict(x, verbose=0)[0]
+        next_index = sample(preds, diversity)
+        next_char = indices_char[next_index]
+        yield next_char
+        sentence = sentence[1:] + next_char
 
 
+def generate_and_print(model, seed, diversity, n, chars):
+    sys.stdout.write('generating with seed: \n')
+    sys.stdout.write(''.join(seed))
+    sys.stdout.write('\n=================================\n')
+
+    generator = generate(model, seed, diversity, chars)
+    sys.stdout.write(''.join(seed))
+
+    full_text = []
+    for _ in range(n):
+        next_char = next(generator)
+        sys.stdout.write(next_char)
+        sys.stdout.flush()
+        full_text.append(next_char)
+
+    return ''.join(full_text)
 
 if __name__ == '__main__':
     #fucking long for a 541Mb json file but hey, political speeches are that boring...
