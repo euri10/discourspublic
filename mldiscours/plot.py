@@ -31,7 +31,7 @@ class Scope(object):
 
 
 class Scope2(object):
-    def __init__(self, ax, verbose=1, interval=1):
+    def __init__(self, ax, verbose=1, interval=1, save=False, filename='myplot.png'):
         #plot elements
         self.ax = ax
         self.x = [0]
@@ -39,8 +39,8 @@ class Scope2(object):
         self.e_x = [0]
         self.e_y = [0]
         self.markers = []
-        self.line = Line2D(self.x, self.y,linewidth=.1 , marker='D', markeredgecolor='r', markevery=self.markers)
-        self.line_epoch = Line2D(self.e_x, self.e_y,linewidth=.3 , color='r')
+        self.line = Line2D(self.x, self.y, linewidth=.1)
+        self.line_epoch = Line2D(self.e_x, self.e_y, linewidth=.3, color='r')
         self.ax.add_line(self.line)
         self.ax.add_line(self.line_epoch)
         self.ax.set_ylim(-.1, 1.1)
@@ -51,8 +51,10 @@ class Scope2(object):
         self.interval = interval
         self.verbose = verbose
 
-    def _update_markers(self, markers):
-        self.markers = markers
+        #save
+        self.save = save
+        self.filename = filename
+
 
     def _update(self, x, y, e_x, e_y, force=False):
         print(self.last_update)
@@ -62,18 +64,21 @@ class Scope2(object):
         self.e_y = e_y
         now = time.time()
         if self.verbose == 1:
-            if not force and (now - self.last_update) < self.interval :
+            if not force and (now - self.last_update) < self.interval:
                 return
             else:
-                # print('NONONO')
+                print('force: {}'.format(force))
                 self.ax.set_xlim(0, len(self.x))
                 self.line.set_data(self.x, self.y)
                 self.line_epoch.set_data(self.e_x, self.e_y)
-                # self.line.set_markevery(every = self.markers)
                 # following line is time consuming
                 self.ax.figure.canvas.draw()
                 self.last_update = now
                 return self.line, self.line_epoch
+
+    def _save(self):
+        if self.save:
+            plt.savefig(self.filename)
 
 
 class DummyCallback(Callback):
@@ -170,15 +175,14 @@ class PlotLive(Callback):
         self.e_y[self.e] = logs['loss']
         self.e += 1
         if self.verbose:
-            self.markers.append(self.i)
-            self.scope._update_markers(self.markers)
-            if epoch < self.nb_epoch :
+            if epoch < self.nb_epoch-1:
                 self.scope._update(self.x[:self.i], self.y[:self.i], self.e_x[:self.e], self.e_y[:self.e])
             else:
                 self.scope._update(self.x[:self.i], self.y[:self.i],
                                    self.e_x[:self.e], self.e_y[:self.e], force=True)
 
     def on_train_end(self, logs={}):
+        self.scope._save()
         print('training done')
 
 
@@ -203,20 +207,18 @@ def plotme():
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    scope = Scope2(ax)
+    scope = Scope2(ax, save=True)
     ani = FuncAnimation(fig, scope._update)
     # ion needed in scope
     plt.show()
     history = PlotLive(scope=scope)
-    dummy = DummyCallback()
+    # dummy = DummyCallback()
     res = model.fit(X_train, Y_train, nb_epoch=4, verbose=1, batch_size=100, callbacks=[history])
-    # res = model.fit(X_train, Y_train, nb_epoch=5, verbose=1, batch_size=100, callbacks=[dummy])
-
-
+    # res = model.fit(X_train, Y_train, nb_epoch=4, verbose=1, batch_size=100, callbacks=[dummy])
     t1 = time.time()
     elapsed = t1 - t0
     print('done {}'.format(elapsed))
-    # done 4.033189535140991
+
 
 
 if __name__ == '__main__':
