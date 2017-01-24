@@ -12,7 +12,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.lines import Line2D
 
 class Scope2(object):
-    def __init__(self, ax, verbose=1, interval=1, save=False, filename='myplot.png' ):
+    def __init__(self, ax, verbose=1, interval=5, save=False, filename='myplot.png' ):
         # ax2 will hold the accuracy and ax the loss
         self.ax = ax
         self.ax2 = self.ax.twinx()
@@ -38,12 +38,12 @@ class Scope2(object):
         self.markers = []
         # define the loss lines
         self.line_b_loss = Line2D(self.b_x_loss, self.b_y_loss, linewidth=.1, linestyle=':', color='b')
-        self.line_e_loss = Line2D(self.e_x_loss, self.e_y_loss, linewidth=.3, color='b')
-        self.line_e_val_loss = Line2D(self.e_x_val_loss, self.e_y_val_loss, linewidth=.3, color='g')
+        self.line_e_loss = Line2D(self.e_x_loss, self.e_y_loss, linewidth=.5, color='b')
+        self.line_e_val_loss = Line2D(self.e_x_val_loss, self.e_y_val_loss, linewidth=.3, color='c')
         # define the accuracy lines
         self.line_b_acc = Line2D(self.b_x_acc, self.b_y_acc, linewidth=.1, linestyle=':', color='r')
-        self.line_e_acc = Line2D(self.e_x_acc, self.e_y_acc, linewidth=.3, color='r')
-        self.line_e_val_acc = Line2D(self.e_x_val_acc, self.e_y_val_acc, linewidth=.3, color='g')
+        self.line_e_acc = Line2D(self.e_x_acc, self.e_y_acc, linewidth=.6, color='r')
+        self.line_e_val_acc = Line2D(self.e_x_val_acc, self.e_y_val_acc, linewidth=.3, color='m')
         # add the lines to relevant axes, losses goes to ax and accuracy to ax2
         self.ax.add_line(self.line_b_loss)
         self.ax.add_line(self.line_e_loss)
@@ -63,6 +63,7 @@ class Scope2(object):
         #save elements
         self.save = save
         self.filename = filename
+
 
     def _update(self, b_x_loss, b_y_loss, e_x_loss, e_y_loss, b_x_acc, b_y_acc, e_x_acc, e_y_acc, e_x_val_acc, e_y_val_acc, e_x_val_loss, e_y_val_loss, force=False):
         print(self.last_update)
