@@ -89,16 +89,16 @@ model.compile(loss='categorical_crossentropy',
               metrics=['accuracy'])
 
 t0 = time.time()
-# fig = plt.figure()
-# ax = fig.add_subplot(1, 1, 1)
-# scope = Scope2(ax)
-# ani = FuncAnimation(fig, scope.update)
-# #ion needed in scope
-# plt.show()
-# history = PlotLive(scope=scope)
-#
-# model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_data=(X_test, Y_test), callbacks=[history])
-model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_data=(X_test, Y_test))
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+scope = Scope2(ax, save=True)
+ani = FuncAnimation(fig, scope._update)
+#ion needed in scope
+plt.show()
+history = PlotLive(scope=scope, plot_validate=True)
+
+model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_data=(X_test, Y_test), callbacks=[history])
+# model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_data=(X_test, Y_test))
 
 score = model.evaluate(X_test, Y_test, verbose=0)
 print('Test score:', score[0])
