@@ -2,6 +2,8 @@ import sys
 import os
 import json
 import logging
+
+import multiprocessing
 import numpy as np
 import progressbar
 
@@ -10,18 +12,25 @@ logger = logging.getLogger(__name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
+def process_json(text_list):
+    raw_text = ''
+    for item in text_list:
+        raw_text += item
+    return raw_text
+
 
 def generate_txt_from_json(filename):
     logger.info('Generate Text')
     with open(filename) as input:
         raw_json = json.load(input)
-    raw_text = ''
-    with progressbar.ProgressBar(max_value=len(raw_json)) as bar:
-        for idx, r in enumerate(raw_json):
-            for item in r['discours']:
-                raw_text += item
-            bar.update(idx)
-    return raw_text
+
+    processes = max(1, multiprocessing.cpu_count() - 1)
+    pool = multiprocessing.Pool(processes)
+    discours = ((r['discours'] for r in raw_json))
+    pool_outputs = pool.map(process_json, discours)
+    pool.close()  # no more tasks
+    pool.join()  # wrap up current tasks
+    return '\n\n'.join(pool_outputs)
 
 def list_chars(text):
     chars = sorted(list(set(text)))
@@ -105,10 +114,10 @@ def generate_and_print(model, seed, diversity, n, chars):
 
 if __name__ == '__main__':
     #fucking long for a 541Mb json file but hey, political speeches are that boring...
-    if not os.path.exists('/home/lotso/PycharmProjects/discourspublic/data/discours.txt'):
+    if not os.path.exists('/home/lotso/PycharmProjects/discourspublic/data/discours/discours_pool.txt'):
         raw_text = generate_txt_from_json('/home/lotso/PycharmProjects/discourspublic/scrapdiscourspublic/discours.json')
-        with open('/home/lotso/PycharmProjects/discourspublic/data/discours.txt', 'w') as output:
+        with open('/home/lotso/PycharmProjects/discourspublic/data/discours_pool.txt', 'w') as output:
             output.write(raw_text)
     else:
-        with open('/home/lotso/PycharmProjects/discourspublic/data/discours.txt') as input:
+        with open('/home/lotso/PycharmProjects/discourspublic/data/discours/discours_pool.txt') as input:
             raw_text = input.read()
